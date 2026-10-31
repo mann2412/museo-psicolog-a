@@ -131,6 +131,7 @@
   /* ---------- Ficha del autor ---------- */
   function ficha(m, i) {
     const a = m.autores[i];
+    const x = (typeof EXTRA !== "undefined" && EXTRA[a.n]) || null;
     sheet.hidden = false;
     document.body.style.overflow = "hidden";
     sheet.innerHTML = `
@@ -145,6 +146,11 @@
           <button class="close" id="cerrar" aria-label="Cerrar">${ICON.x}</button>
         </div>
         <div class="body">
+          ${x ? `<div class="pos">
+            <div class="pbox"><h3>Objeto de estudio</h3><span class="ask">¿Qué define como “psicología”?</span><p>${esc(x.o)}</p></div>
+            <div class="pbox"><h3>Metáfora de la mente</h3><span class="ask">Su postura de base</span><p>${esc(x.m)}</p></div>
+            <div class="pbox"><h3>Enemigo teórico</h3><span class="ask">¿Contra quién debatía?</span><p>${esc(x.e)}</p></div>
+          </div>` : ""}
           <div class="blk"><h3>Aportaciones</h3><ul>${a.ap.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>
           <div class="blk"><h3>Contexto histórico</h3><p>${esc(a.ctx)}</p></div>
           <div class="blk"><h3>Contexto biográfico</h3><p>${esc(a.bio)}</p></div>

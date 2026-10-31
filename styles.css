@@ -126,3 +126,12 @@ button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
 .toast[hidden]{display:none}
 .hidden-file{display:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Posición teórica */
+.pos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:18px 0 4px}
+@media (max-width:760px){.pos{grid-template-columns:1fr}}
+.pbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(255,255,255,.03)}
+.pbox h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);margin-bottom:2px}
+.pbox .ask{display:block;font-size:12.5px;font-style:italic;color:var(--muted);margin-bottom:8px}
+.pbox p{color:#dde1ee;font-size:14.5px}
+.panel-head .ini{font-size:34px}

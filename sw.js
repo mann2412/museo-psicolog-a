@@ -1,7 +1,7 @@
-const VERSION = "museo-v1";
+const VERSION = "museo-v2";
 const IMG = "museo-img-v1";
 const SHELL = [
-  "./", "./index.html", "./styles.css", "./app.js", "./data.js",
+  "./", "./index.html", "./styles.css", "./app.js", "./data.js", "./extra.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png"
 ];
