@@ -1,4 +1,4 @@
-const VERSION = "museo-v2";
+const VERSION = "museo-v3";
 const IMG = "museo-img-v1";
 const SHELL = [
   "./", "./index.html", "./styles.css", "./app.js", "./data.js", "./extra.js",

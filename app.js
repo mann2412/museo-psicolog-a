@@ -129,9 +129,27 @@
   }
 
   /* ---------- Ficha del autor ---------- */
+  let teclaActual = null;
+
+  // Cierra la ficha en pantalla sin tocar el historial.
+  function cerrarUI() {
+    sheet.hidden = true; sheet.innerHTML = ""; document.body.style.overflow = "";
+    if (teclaActual) { document.removeEventListener("keydown", teclaActual); teclaActual = null; }
+  }
+  // Botón X, fondo, Escape: retroceden una entrada del historial (igual que el botón atrás),
+  // y el listener de popstate cierra la ficha.
+  function cerrarFicha() {
+    if (history.state && history.state.ficha) history.back(); else cerrarUI();
+  }
+  // Botón atrás de Android (o del navegador): si hay una ficha abierta, solo se cierra la ficha.
+  window.addEventListener("popstate", () => { if (!sheet.hidden) cerrarUI(); });
+
   function ficha(m, i) {
     const a = m.autores[i];
     const x = (typeof EXTRA !== "undefined" && EXTRA[a.n]) || null;
+    // Abrir una ficha crea una entrada de historial; cambiar de autor dentro de la ficha no.
+    if (!(history.state && history.state.ficha)) { try { history.pushState({ ficha: 1 }, ""); } catch (e) {} }
+    if (teclaActual) { document.removeEventListener("keydown", teclaActual); teclaActual = null; }
     sheet.hidden = false;
     document.body.style.overflow = "hidden";
     sheet.innerHTML = `
@@ -169,17 +187,19 @@
       </div>`;
     pintarFoto($("#fotoFicha"), a, m.hue);
 
-    const cerrar = () => { sheet.hidden = true; sheet.innerHTML = ""; document.body.style.overflow = ""; document.removeEventListener("keydown", tecla); };
+    // Anterior/Siguiente y recargar la ficha no tocan el historial: solo cambia el contenido.
+    const ir = (j) => { cerrarUI(); ficha(m, j); };
     const tecla = (e) => {
-      if (e.key === "Escape") cerrar();
-      if (e.key === "ArrowRight" && i < m.autores.length - 1) { cerrar(); ficha(m, i + 1); }
-      if (e.key === "ArrowLeft" && i > 0) { cerrar(); ficha(m, i - 1); }
+      if (e.key === "Escape") cerrarFicha();
+      if (e.key === "ArrowRight" && i < m.autores.length - 1) ir(i + 1);
+      if (e.key === "ArrowLeft" && i > 0) ir(i - 1);
     };
+    teclaActual = tecla;
     document.addEventListener("keydown", tecla);
-    $("#cerrar").onclick = cerrar;
-    sheet.onclick = (e) => { if (e.target === sheet) cerrar(); };
-    $("#ant").onclick = () => { if (i > 0) { cerrar(); ficha(m, i - 1); } };
-    $("#sig").onclick = () => { if (i < m.autores.length - 1) { cerrar(); ficha(m, i + 1); } };
+    $("#cerrar").onclick = cerrarFicha;
+    sheet.onclick = (e) => { if (e.target === sheet) cerrarFicha(); };
+    $("#ant").onclick = () => { if (i > 0) ir(i - 1); };
+    $("#sig").onclick = () => { if (i < m.autores.length - 1) ir(i + 1); };
 
     $("#subir").onclick = () => $("#archivo").click();
     $("#archivo").onchange = (e) => {
@@ -197,7 +217,7 @@
           ctx.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
           const ok = store.set("foto:" + a.n, c.toDataURL("image/jpeg", 0.85));
           mostrar(ok ? "Foto guardada en este dispositivo" : "No hubo espacio para guardar la foto");
-          cerrar(); ficha(m, i);
+          ir(i);
           const g = app.querySelector(`[data-foto="${i}"]`); if (g) pintarFoto(g, a, m.hue);
         };
         im.src = rd.result;
@@ -207,7 +227,7 @@
     const q = $("#quitar");
     if (q) q.onclick = () => {
       store.del("foto:" + a.n);
-      cerrar(); ficha(m, i);
+      ir(i);
       const g = app.querySelector(`[data-foto="${i}"]`); if (g) pintarFoto(g, a, m.hue);
     };
   }
@@ -219,6 +239,7 @@
 
   /* ---------- Rutas ---------- */
   function ruta() {
+    cerrarUI();
     const h = location.hash || "";
     if (h.startsWith("#/m/")) return sala(decodeURIComponent(h.slice(4)));
     if (h === "#/calle") return calle();
@@ -226,6 +247,8 @@
     splash();
   }
   window.addEventListener("hashchange", ruta);
+  // Si se recarga con una entrada de ficha en el historial, se limpia: la ficha no sobrevive a la recarga.
+  if (history.state && history.state.ficha) { try { history.replaceState(null, ""); } catch (e) {} }
   ruta();
 
   if ("serviceWorker" in navigator) {
