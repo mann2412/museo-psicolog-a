@@ -1,4 +1,4 @@
-const VERSION = "museo-v3";
+const VERSION = "museo-v5";
 const IMG = "museo-img-v1";
 const SHELL = [
   "./", "./index.html", "./styles.css", "./app.js", "./data.js", "./extra.js",
@@ -7,7 +7,7 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -37,12 +37,18 @@ self.addEventListener("fetch", (e) => {
 
   if (url.origin !== location.origin) return;
 
-  // Archivos de la app: cache primero con respaldo de red
+  // Archivos de la app: red primero (siempre la versión más reciente) y caché como respaldo sin conexión
   e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(VERSION).then((c) => c.put(req, copy));
+    fetch(req, { cache: "no-cache" }).then((res) => {
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(VERSION).then((c) => c.put(req, copy));
+      }
       return res;
-    }).catch(() => caches.match("./index.html")))
+    }).catch(() => caches.match(req).then((hit) => hit || caches.match("./index.html")))
   );
+});
+
+self.addEventListener("message", (e) => {
+  if (e.data === "SKIP_WAITING") self.skipWaiting();
 });

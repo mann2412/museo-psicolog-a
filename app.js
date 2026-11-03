@@ -251,7 +251,36 @@
   if (history.state && history.state.ficha) { try { history.replaceState(null, ""); } catch (e) {} }
   ruta();
 
+  /* ---------- Actualización con botón ---------- */
+  function avisoActualizacion() {
+    if (document.getElementById("upd")) return;
+    const b = document.createElement("div");
+    b.id = "upd"; b.className = "upd"; b.setAttribute("role", "status");
+    b.innerHTML = '<span>Hay una nueva versión del museo</span>';
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.textContent = "Actualizar";
+    btn.addEventListener("click", () => { btn.disabled = true; btn.textContent = "Actualizando…"; location.reload(); });
+    const x = document.createElement("button");
+    x.type = "button"; x.className = "upd-x"; x.setAttribute("aria-label", "Cerrar"); x.textContent = "×";
+    x.addEventListener("click", () => b.remove());
+    b.append(btn, x);
+    document.body.appendChild(b);
+  }
+
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
+        const buscar = () => reg.update().catch(() => {});
+        const vigilar = (sw) => sw && sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) avisoActualizacion();
+        });
+        if (reg.waiting && navigator.serviceWorker.controller) avisoActualizacion();
+        reg.addEventListener("updatefound", () => vigilar(reg.installing));
+        buscar();
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) buscar(); });
+        window.addEventListener("online", buscar);
+        setInterval(buscar, 30 * 60 * 1000);
+      }).catch(() => {});
+    });
   }
 })();
